@@ -1,20 +1,18 @@
-package taskManager;
+package models;
 
 public class Subtask extends Task {
-    private Epic epic;
+    private Integer epicId;
 
     public Subtask(String title, String description, Status status) {
         super(title, description, status);
     }
 
-    public void setEpic(Epic epic) {
-        if (this.epic == null) {
-            this.epic = epic;
-        }
+    public void setEpicId(Integer epicId) {
+        this.epicId = epicId;
     }
 
-    public Epic getEpic() {
-        return epic;
+    public Integer getEpicId() {
+        return epicId;
     }
 
     @Override
@@ -24,7 +22,7 @@ public class Subtask extends Task {
                 ", title='" + getTitle() + '\'' +
                 ", description='" + getDescription() + '\'' +
                 ", status=" + getStatus() + '\'' +
-                ", epicId=" + epic.getId() +
+                ", epicId=" + epicId +
                 '}';
     }
 }

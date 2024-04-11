@@ -1,9 +1,9 @@
-package taskManager;
+package models;
 
 import java.util.Objects;
 
 public class Task {
-    private int id;
+    private Integer id;
     private String title;
     private String description;
     private Status status;
@@ -14,18 +14,16 @@ public class Task {
         this.status = status;
     }
 
-    public Task(int id, String title, String description, Status status) {
+    public Task(Integer id, String title, String description, Status status) {
         this(title, description, status);
+        setId(id);
+    }
+
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public void setId(int id) {
-        if (this.id == 0) {
-            this.id = id;
-        }
-    }
-
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -58,7 +56,7 @@ public class Task {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
-        return id == task.id;
+        return Objects.equals(id, task.id);
     }
 
     @Override
