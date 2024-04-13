@@ -96,7 +96,6 @@ public class Main {
         System.out.println("Проверяем что TaskManager удаляет элементы:");
         assert subtasks.isEmpty() : "Количество элементов не пусто";
         assert taskManager.getEpicSubtasks(epic).isEmpty() : "Количество элементов не пусто";
-        assert task.getEpicId() == null : "Связь подзадачи с эпиком не очистилась";
     }
 
     private static void assertCreateEpic() {

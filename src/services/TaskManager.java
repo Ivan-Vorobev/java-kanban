@@ -105,43 +105,28 @@ public class TaskManager {
     }
 
     public void removeTask(int taskId) {
-        Task task = tasks.get(taskId);
-
-        if (task == null) {
-            return;
-        }
-
-        tasks.remove(task.getId());
+        tasks.remove(taskId);
     }
 
     public void removeEpic(int epicId) {
-        Epic epic = epics.get(epicId);
+        Epic epic = epics.remove(epicId);
 
-        if (epic == null) {
-            return;
+        if (epic != null) {
+            ArrayList<Integer> subtaskIds = epic.getSubtaskIds();
+            for (Integer subtaskId : subtaskIds) {
+                subtasks.remove(subtaskId);
+            }
         }
-
-        ArrayList<Integer> subtaskIds = epic.getSubtaskIds();
-        for (Integer subtaskId : subtaskIds) {
-            subtasks.remove(subtaskId);
-        }
-
-        subtaskIds.clear();
-        epics.remove(epicId);
     }
 
     public void removeSubtask(int subtaskId) {
-        Subtask subtask = subtasks.get(subtaskId);
+        Subtask subtask = subtasks.remove(subtaskId);
 
-        if (subtask == null) {
-            return;
+        if (subtask != null) {
+            Epic epic = epics.get(subtask.getEpicId());
+            epic.getSubtaskIds().remove(subtask.getId());
+            epic.setStatus(calculateEpicStatus(epic));
         }
-
-        Epic epic = epics.get(subtask.getEpicId());
-        epic.getSubtaskIds().remove(subtask.getId());
-        subtask.setEpicId(null);
-        subtasks.remove(subtask.getId());
-        epic.setStatus(calculateEpicStatus(epic));
     }
 
     public void removeAllTasks() {
@@ -149,20 +134,15 @@ public class TaskManager {
     }
 
     public void removeAllSubtasks() {
-        // Для повисших вне менеджера объектов в памяти чистим связи.
-        // Чистим связи у подзадач к эпикам
-        for (Subtask subtask : subtasks.values()) {
-            subtask.setEpicId(null);
-        }
-        // Чистим связи у эпиков к подзадачам
         for (Epic epic : epics.values()) {
             epic.getSubtaskIds().clear();
+            epic.setStatus(calculateEpicStatus(epic));
         }
         subtasks.clear();
     }
 
     public void removeAllEpics() {
-        removeAllSubtasks();
+        subtasks.clear();
         epics.clear();
     }
 
