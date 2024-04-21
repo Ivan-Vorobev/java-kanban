@@ -2,6 +2,8 @@ package services;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import services.history.HistoryManager;
+import services.task.TaskManager;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -1,4 +1,4 @@
-package services;
+package services.task.memory;
 
 import models.Epic;
 import models.Status;
@@ -7,6 +7,7 @@ import models.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import services.history.memory.InMemoryHistoryManager;
 
 import java.util.List;
 
@@ -53,7 +54,7 @@ class InMemoryTaskManagerTest {
     @DisplayName("Проверяем работу с Subtask")
     void shouldCreateSubtask() {
         Subtask subtask = new Subtask("Subtask title", "Subtask description", Status.NEW);
-        Epic epic = new Epic("Epic title", "Epic description", Status.NEW);
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
         Subtask createdSubtask = taskManager.createSubtask(epic, subtask);
         Subtask findSubtask = taskManager.getSubtask(createdSubtask.getId());
         List<Subtask> subtasks = taskManager.getAllSubtasks();
