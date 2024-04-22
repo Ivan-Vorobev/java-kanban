@@ -4,6 +4,7 @@ import models.Epic;
 import models.Status;
 import models.Subtask;
 import models.Task;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,103 +24,337 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    @DisplayName("Проверяем работу с Task")
-    void shouldCreateTask() {
+    @DisplayName("Проверяем создание Task")
+    void createTask_returnNewTask() {
+        String title = "Title";
+        String description = "Description";
+        Status status = Status.NEW;
+        Task task = new Task(title, description, status);
+
+        Assertions.assertNull(task.getId(), "id задачи не null");
+
+        Task createdTask = taskManager.createTask(task);
+        assertNotNull(createdTask, "Созданная задача null");
+        assertEquals(createdTask.getTitle(), title, "Заголовок отличается после создания задачи");
+        assertEquals(createdTask.getDescription(), description, "Описание отличается после создания задачи");
+        assertEquals(createdTask.getStatus(), status, "Статус отличается после создания задачи");
+        assertNotNull(createdTask.getId(), "id после создания задачи null");
+    }
+
+    @Test
+    @DisplayName("Поиск существующий Task")
+    void getTask_returnExistsTask() {
         Task task = new Task("Title", "Description", Status.NEW);
         Task createdTask = taskManager.createTask(task);
+
         Task findTask = taskManager.getTask(createdTask.getId());
-        List<Task> tasks = taskManager.getAllTasks();
 
-        assertNotNull(createdTask, "Созданная задача null");
-        assertNotNull(findTask, "Найденная задача null");
-        assertNotNull(tasks, "Список задач null");
         assertEquals(createdTask, findTask, "Созданная и найденная задача не равны");
-        assertEquals(createdTask, tasks.get(0), "Первая созданная и первая найденная из списка задача не равны");
-        assertEquals(tasks.size(), 1, "Добавлено больше 1 задачи");
+    }
 
-        taskManager.removeTask(createdTask.getId());
-        assertNull(taskManager.getTask(createdTask.getId()), "Задача не удалилась");
+    @Test
+    @DisplayName("Поиск несуществующий Task")
+    void getTask_returnNull_taskNotExist() {
+        Task findTask = taskManager.getTask(0);
 
-        taskManager.createTask(task);
-        taskManager.createTask(task);
-        taskManager.createTask(task);
-        assertEquals(taskManager.getAllTasks().size(), 3, "Добавлено больше 3-х задачи");
+        assertNull(findTask, "Найдена несуществующая задача");
+    }
+
+    @Test
+    @DisplayName("Обновление существующий Task")
+    void updateTask_returnUpdatedTask_taskExist() {
+        Task task = new Task("Title", "Description", Status.NEW);
+        Task createdTask = taskManager.createTask(task);
+        Task updateTask = new Task("Updated title", "Updated description", Status.DONE);
+        updateTask.setId(createdTask.getId());
+
+        Task updatedTask = taskManager.updateTask(updateTask);
+
+        assertNotNull(updatedTask, "Не удалось обновить задачу");
+        assertEquals(createdTask.getId(), updatedTask.getId(), "id обновленной задачи не равен входным параметрам");
+        assertEquals(createdTask.getTitle(), updatedTask.getTitle(), "title обновленной задачи не равен входным параметрам");
+        assertEquals(createdTask.getDescription(), updatedTask.getDescription(), "description обновленной задачи не равен входным параметрам");
+        assertEquals(createdTask.getStatus(), updatedTask.getStatus(), "status обновленной задачи не равен входным параметрам");
+    }
+    @Test
+    @DisplayName("Обновление несуществующий Task")
+    void updateTask_returnNull_taskNotExist() {
+        Task task = new Task("Title", "Description", Status.NEW);
+        task.setId(1);
+        Task updatedTask = taskManager.updateTask(task);
+
+        assertNull(updatedTask, "Обновилась неизвестная задача");
+    }
+
+    @Test
+    @DisplayName("Удаление существующей задачи Task")
+    void removeTask_removeExistTask() {
+        Task cretaedTask = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
+
+        taskManager.removeTask(cretaedTask.getId());
+
+        assertEquals(taskManager.getAllTasks().size(), 2, "Количество задач не соответствует ожидаемому после удаления");
+        assertNull(taskManager.getTask(cretaedTask.getId()), "Задача не удалилась");
+    }
+
+    @Test
+    @DisplayName("Удаление всех существующих задач Task")
+    void removeAllTasks_removeExistTask() {
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
 
         taskManager.removeAllTasks();
-        assertEquals(taskManager.getAllTasks().size(), 0, "Все задачи не удалились");
+
+        assertEquals(taskManager.getAllTasks().size(), 0, "Задачи не удалились");
     }
 
-
     @Test
-    @DisplayName("Проверяем работу с Subtask")
-    void shouldCreateSubtask() {
-        Subtask subtask = new Subtask("Subtask title", "Subtask description", Status.NEW);
+    @DisplayName("Получение всех задач Task")
+    void getAllTasks_returnListTasks() {
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
+
+        assertEquals(taskManager.getAllTasks().size(), 3, "Количество задач не соответствует созданному количеству");
+    }
+
+    // ---
+    @Test
+    @DisplayName("Проверяем создание Subtask")
+    void createSubtask_returnNewSubtask() {
+        String title = "Title";
+        String description = "Description";
+        Status status = Status.NEW;
+        Subtask subtask = new Subtask(title, description, status);
         Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+
         Subtask createdSubtask = taskManager.createSubtask(epic, subtask);
-        Subtask findSubtask = taskManager.getSubtask(createdSubtask.getId());
-        List<Subtask> subtasks = taskManager.getAllSubtasks();
 
         assertNotNull(createdSubtask, "Созданная подзадача null");
-        assertNotNull(findSubtask, "Найденная подзадача null");
-        assertNotNull(subtasks, "Список подзадач null");
-        assertEquals(createdSubtask, findSubtask, "Созданная и найденная подзадача не равны");
-        assertEquals(createdSubtask, subtasks.get(0), "Первая созданная и первая найденная из списка подзадача не равны");
-        assertEquals(subtasks.size(), 1, "Добавлено больше 1 подзадачи");
-
-        taskManager.removeSubtask(createdSubtask.getId());
-        assertNull(taskManager.getTask(createdSubtask.getId()), "Подзадача не удалилась");
-
-        taskManager.createSubtask(epic, subtask);
-        taskManager.createSubtask(epic, subtask);
-        taskManager.createSubtask(epic, subtask);
-        assertEquals(taskManager.getAllSubtasks().size(), 3, "Добавлено больше 3-х подзадач");
-
-        taskManager.removeAllSubtasks();
-        assertEquals(taskManager.getAllSubtasks().size(), 0, "Все подзадачи не удалились");
+        assertEquals(createdSubtask.getTitle(), title, "Заголовок отличается после создания подзадачи");
+        assertEquals(createdSubtask.getDescription(), description, "Описание отличается после создания подзадачи");
+        assertEquals(createdSubtask.getStatus(), status, "Статус отличается после создания подзадачи");
+        assertNotNull(createdSubtask.getId(), "id после создания подзадачи null");
+        assertEquals(epic.getId(), subtask.getEpicId(), "связь id эпика в подзадачи не соответствует эпику");
     }
 
     @Test
-    @DisplayName("Проверяем работу с Epic")
-    void shouldCreateEpic() {
-        Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
-        Epic createdEpic = taskManager.createEpic(epic);
-        Epic findEpic = taskManager.getEpic(createdEpic.getId());
-        List<Epic> epics = taskManager.getAllEpics();
-        List<Subtask> subtasks = taskManager.getEpicSubtasks(createdEpic);
+    @DisplayName("Поиск существующий Subtask")
+    void getSubtask_returnExistsSubtask() {
+        Subtask task = new Subtask("Title", "Description", Status.NEW);
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        Subtask createdSubtask = taskManager.createSubtask(epic, task);
+
+        Subtask findSubtask = taskManager.getSubtask(createdSubtask.getId());
+
+        assertEquals(createdSubtask, findSubtask, "Созданная и найденная подзадача не равны");
+    }
+
+    @Test
+    @DisplayName("Поиск несуществующий Subtask")
+    void getSubtask_returnNull_SubtaskNotExist() {
+        Subtask findSubtask = taskManager.getSubtask(0);
+
+        assertNull(findSubtask, "Найдена несуществующая подзадача");
+    }
+
+    @Test
+    @DisplayName("Обновление существующий Subtask")
+    void updateSubtask_returnUpdatedSubtask_subtaskExist() {
+        Subtask task = new Subtask("Title", "Description", Status.NEW);
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        Subtask createdSubtask = taskManager.createSubtask(epic, task);
+        Subtask updateSubtask = new Subtask("Updated title", "Updated description", Status.DONE);
+        updateSubtask.setId(createdSubtask.getId());
+
+        Subtask updatedSubtask = taskManager.updateSubtask(updateSubtask);
+
+        assertNotNull(updatedSubtask, "Не удалось обновить подзадачу");
+        assertEquals(createdSubtask.getId(), updatedSubtask.getId(), "id обновленной подзадачи не равен входным параметрам");
+        assertEquals(createdSubtask.getTitle(), updatedSubtask.getTitle(), "title обновленной подзадачи не равен входным параметрам");
+        assertEquals(createdSubtask.getDescription(), updatedSubtask.getDescription(), "description обновленной подзадачи не равен входным параметрам");
+        assertEquals(createdSubtask.getStatus(), updatedSubtask.getStatus(), "status обновленной подзадачи не равен входным параметрам");
+    }
+    @Test
+    @DisplayName("Обновление несуществующий Subtask")
+    void updateSubtask_returnNull_taskNotExist() {
+        Subtask task = new Subtask("Title", "Description", Status.NEW);
+        task.setId(1);
+
+        Subtask updatedSubtask = taskManager.updateSubtask(task);
+
+        assertNull(updatedSubtask, "Обновилась неизвестная подзадача");
+    }
+
+    @Test
+    @DisplayName("Удаление существующей подзадачи Subtask")
+    void removeSubtask_removeExistSubtask() {
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        Subtask cretaedSubtask = taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+
+        taskManager.removeSubtask(cretaedSubtask.getId());
+
+        assertEquals(taskManager.getAllSubtasks().size(), 2, "Количество подзадач не соответствует ожидаемому после удаления");
+        assertNull(taskManager.getSubtask(cretaedSubtask.getId()), "Подзадача не удалилась");
+    }
+
+    @Test
+    @DisplayName("Удаление всех существующих подзадач Subtask")
+    void removeAllSubtasks_removeExistSubtask() {
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(
+                taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW)),
+                new Subtask("Title", "Description", Status.NEW)
+        );
+
+        taskManager.removeAllSubtasks();
+
+        assertEquals(taskManager.getAllSubtasks().size(), 0, "Подзадачи не удалились");
+    }
+
+    @Test
+    @DisplayName("Получение всех задач Subtask")
+    void getAllSubtasks_returnListSubtasks() {
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(
+                taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW)),
+                new Subtask("Title", "Description", Status.NEW)
+        );
+
+        assertEquals(taskManager.getAllSubtasks().size(), 3, "Количество подзадач не соответствует созданному количеству");
+    }
+
+    // ---
+    @Test
+    @DisplayName("Проверяем создание Epic")
+    void createEpic_returnNewEpic() {
+        String title = "Title";
+        String description = "Description";
+        Status status = Status.DONE;
+
+        Epic createdEpic = taskManager.createEpic(new Epic(title, description, status));
 
         assertNotNull(createdEpic, "Созданный эпик null");
-        assertNotNull(findEpic, "Найденный эпик null");
-        assertNotNull(epics, "Список эпиков null");
-        assertNotNull(subtasks, "Список подзадач эпика null");
-        assertEquals(createdEpic, findEpic, "Созданный и найденный эпик не равны");
-        assertEquals(createdEpic, epics.get(0), "Первый созданный и первый найденный из списка эпик не равны");
-        assertEquals(epics.size(), 1, "Добавлено больше 1 эпика");
+        assertEquals(createdEpic.getTitle(), title, "Заголовок отличается после создания эпика");
+        assertEquals(createdEpic.getDescription(), description, "Описание отличается после создания эпика");
+        assertEquals(createdEpic.getStatus(), Status.NEW, "Статус созданного эпика не NEW");
+        assertNotNull(createdEpic.getId(), "id после создания эпика null");
+        assertEquals(createdEpic.getSubtaskIds().size(), 0, "Количество подзадач больше 0");
+    }
 
-        Subtask subtaskNew = new Subtask("New Subtask title", "New Subtask description", Status.NEW);
-        taskManager.createSubtask(createdEpic, subtaskNew);
-        assertEquals(taskManager.getAllSubtasks().size(), 1, "Добавлено больше 1 подзадачи");
+    @Test
+    @DisplayName("Поиск существующего Epic")
+    void getEpic_returnExistsEpic() {
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        Epic createdEpic = taskManager.createEpic(epic);
 
-        taskManager.removeEpic(createdEpic.getId());
-        assertNull(taskManager.getEpic(createdEpic.getId()), "Эпик не удалился");
-        assertEquals(taskManager.getAllSubtasks().size(), 0, "Подзадачи эпика не удалились");
+        Epic findEpic = taskManager.getEpic(createdEpic.getId());
 
-        createdEpic = taskManager.createEpic(epic);
-        taskManager.createSubtask(createdEpic, subtaskNew);
-        taskManager.createSubtask(createdEpic, subtaskNew);
-        taskManager.createSubtask(createdEpic, subtaskNew);
-        taskManager.createSubtask(taskManager.createEpic(epic), subtaskNew);
-        taskManager.createSubtask(taskManager.createEpic(epic), subtaskNew);
-        assertEquals(taskManager.getAllEpics().size(), 3, "Добавлено больше 3-х эпиков");
-        assertEquals(taskManager.getAllSubtasks().size(), 5, "Добавлено не 5 подзадач");
+        assertEquals(createdEpic, findEpic, "Созданная и найденная подзадача не равны");
+    }
+
+    @Test
+    @DisplayName("Поиск несуществующего Epic")
+    void getEpic_returnNull_epicNotExist() {
+        Epic findEpic = taskManager.getEpic(0);
+
+        assertNull(findEpic, "Найдена несуществующая подзадача");
+    }
+
+    @Test
+    @DisplayName("Обновление существующего Epic")
+    void updateEpic_returnUpdatedEpic_epicExist() {
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        Epic createdEpic = taskManager.createEpic(epic);
+        Epic updateEpic = new Epic("Updated title", "Updated description", Status.DONE);
+        updateEpic.setId(createdEpic.getId());
+
+        Epic updatedEpic = taskManager.updateEpic(updateEpic);
+
+        assertNotNull(updatedEpic, "Не удалось обновить эпик");
+        assertEquals(createdEpic.getId(), updatedEpic.getId(), "id обновленного эпика не равен входным параметрам");
+        assertEquals(createdEpic.getTitle(), updatedEpic.getTitle(), "title обновленной эпика не равен входным параметрам");
+        assertEquals(createdEpic.getDescription(), updatedEpic.getDescription(), "description обновленного эпика не равен входным параметрам");
+        assertEquals(createdEpic.getStatus(), updatedEpic.getStatus(), "status обновленного эпика не равен входным параметрам");
+    }
+    @Test
+    @DisplayName("Обновление несуществующий Epic")
+    void updateEpic_returnNull_taskNotExist() {
+        Epic task = new Epic("Title", "Description", Status.NEW);
+        task.setId(1);
+
+        Epic updatedEpic = taskManager.updateEpic(task);
+
+        assertNull(updatedEpic, "Обновилась неизвестная подзадача");
+    }
+
+    @Test
+    @DisplayName("Удаление существующего Epic")
+    void removeEpic_removeExistEpic() {
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+
+        taskManager.removeEpic(epic.getId());
+
+        assertEquals(taskManager.getAllEpics().size(), 2, "Количество эпиков' не соответствует ожидаемому после удаления");
+        assertNull(taskManager.getEpic(epic.getId()), "Эпик не удалился");
+        assertEquals(taskManager.getEpicSubtasks(epic).size(), 0, "Количество подзадач у эпика не соответствует ожидаемому после удаления");
+    }
+
+    @Test
+    @DisplayName("Удаление всех существующих Epic")
+    void removeAllEpics_removeExistEpic() {
+        taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(
+                taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW)),
+                new Subtask("Title", "Description", Status.NEW)
+        );
 
         taskManager.removeAllEpics();
-        assertEquals(taskManager.getAllEpics().size(), 0, "Все эпики не удалились");
-        assertEquals(taskManager.getAllSubtasks().size(), 0, "Все подзадачи не удалились");
+
+        assertEquals(taskManager.getAllEpics().size(), 0, "Эпики не удалились");
+        assertEquals(taskManager.getAllSubtasks().size(), 0, "Подзадачи не удалились");
+    }
+
+    @Test
+    @DisplayName("Получение всех Epic")
+    void getAllEpics_returnListEpics() {
+        taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+
+        assertEquals(taskManager.getAllEpics().size(), 3, "Количество эпиков' не соответствует созданному количеству");
+    }
+
+    @Test
+    @DisplayName("Получение всех подзадач Epic")
+    void getEpicSubtasks_returnSubtaskList() {
+        Epic epic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+        taskManager.createSubtask(epic, new Subtask("Title", "Description", Status.NEW));
+
+        assertEquals(taskManager.getEpicSubtasks(epic).size(), 2, "Количество эпиков' не соответствует созданному количеству");
     }
 
     @Test
     @DisplayName("Проверяем изменение NEW статусов у Epic")
-    void shouldChangeEpicStatusToNew() {
+    void checkEpicStatus_returnNew_setSubtaskWithNewStatus() {
         Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
         Epic createdEpic = taskManager.createEpic(epic);
         Subtask subtaskNew = new Subtask("New Subtask title", "New Subtask description", Status.NEW);
@@ -133,7 +368,7 @@ class InMemoryTaskManagerTest {
 
     @Test
     @DisplayName("Проверяем изменение IN_PROGRESS статусов у Epic")
-    void shouldChangeEpicStatusToInProgress() {
+    void checkEpicStatus_returnInProgress_setAllSubtaskStatus() {
         Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
         Epic createdEpic = taskManager.createEpic(epic);
         Subtask subtaskNew = new Subtask("New Subtask title", "New Subtask description", Status.NEW);
@@ -155,7 +390,7 @@ class InMemoryTaskManagerTest {
 
     @Test
     @DisplayName("Проверяем изменение DONE статусов у Epic")
-    void shouldChangeEpicStatusToDone() {
+    void checkEpicStatus_returnDone_setSubtaskWithDoneStatus() {
         Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
         Epic createdEpic = taskManager.createEpic(epic);
         Subtask subtaskDone = new Subtask("Done Subtask title", "Done Subtask description", Status.DONE);
@@ -166,62 +401,54 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    @DisplayName("Проверяем что задачи с заданным внешним id не влияют на созданные")
-    void shouldCheckGenerateId() {
-        Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
-        epic.setId(100);
-        Epic createdEpic = taskManager.createEpic(epic);
-        assertNotEquals(createdEpic.getId(), 100, "id созданного эпика и произвольного совпали");
-
-        Subtask subtaskNew = new Subtask("New Subtask title", "New Subtask description", Status.NEW);
-        subtaskNew.setId(101);
-        Subtask createdSubtask = taskManager.createSubtask(createdEpic, subtaskNew);
-        assertNotEquals(createdSubtask.getId(), 101, "id созданной подзадачи и произвольной совпали");
-
+    @DisplayName("Проверяем что задача с заданным внешним id не влияют на созданный id")
+    void checkCreateTaskId_setNewId_setExternalIdHasNoEffectForNewTask() {
         Task task = new Task("Title", "Description", Status.NEW);
         task.setId(102);
+
         Task createdTask = taskManager.createTask(task);
+
         assertNotEquals(createdTask.getId(), 102, "id созданной задачи и произвольной совпали");
     }
 
     @Test
-    @DisplayName("Проверяем неизменяемость полей при создании Task")
-    void shouldNotChangeTaskFields() {
-        String title = "Title";
-        String description = "Description";
-        Status status = Status.NEW;
-
-        Task task = new Task(title, description, status);
-        Task createdTask = taskManager.createTask(task);
-        assertEquals(createdTask.getTitle(), title, "Title отличается");
-        assertEquals(createdTask.getDescription(), description, "Description отличается");
-        assertEquals(createdTask.getStatus(), status, "Status отличается");
-    }
-
-    @Test
-    @DisplayName("Проверяем неизменяемость полей при создании Subtask")
-    void shouldNotChangeSubtaskFields() {
-        String title = "Title";
-        String description = "Description";
-        Status status = Status.NEW;
-
+    @DisplayName("Проверяем что эпик с заданным внешним id не влияют на созданный id")
+    void checkCreateEpicId_setNewId_setExternalIdHasNoEffectForNewEpic() {
         Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
-        Subtask subtask = new Subtask(title, description, status);
-        Subtask createdSubtask = taskManager.createSubtask(epic, subtask);
-        assertEquals(createdSubtask.getTitle(), title, "Title отличается");
-        assertEquals(createdSubtask.getDescription(), description, "Description отличается");
-        assertEquals(createdSubtask.getStatus(), status, "Status отличается");
+        epic.setId(100);
+
+        Epic createdEpic = taskManager.createEpic(epic);
+
+        assertNotEquals(createdEpic.getId(), 100, "id созданного эпика и произвольного совпали");
     }
 
     @Test
-    @DisplayName("Проверяем неизменяемость полей при создании Epic")
-    void shouldNotChangeEpicFields() {
-        String title = "Title";
-        String description = "Description";
+    @DisplayName("Проверяем что подзадача с заданным внешним id не влияют на созданный id")
+    void checkCreateSubtaskId_setNewId_setExternalIdHasNoEffectForNewSubtask() {
+        Epic createdEpic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Subtask subtaskNew = new Subtask("New Subtask title", "New Subtask description", Status.NEW);
+        subtaskNew.setId(101);
 
-        Epic epic = new Epic(title, description, Status.DONE);
-        Epic createdEpic = taskManager.createEpic(epic);
-        assertEquals(createdEpic.getTitle(), title, "Title отличается");
-        assertEquals(createdEpic.getDescription(), description, "Description отличается");
+        Subtask createdSubtask = taskManager.createSubtask(createdEpic, subtaskNew);
+
+        assertNotEquals(createdSubtask.getId(), 101, "id созданной подзадачи и произвольной совпали");
+    }
+
+    @Test
+    @DisplayName("Проверяем что история возвращает просмотренные задачи / подзадачи / эпики")
+    void getHistory_returnShownTaskList_afterGetTaskSubtaskEpics() {
+        Epic createdEpic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Subtask subtask = taskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Task task = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.getTask(task.getId());
+        taskManager.getSubtask(subtask.getId());
+        taskManager.getEpic(createdEpic.getId());
+
+        List<Task> histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 3, "История просмотров не равна количеству просмотров");
+        assertEquals(histories.get(0), task, "История не хронологична");
+        assertEquals(histories.get(1), subtask, "История не хронологична");
+        assertEquals(histories.get(2), createdEpic, "История не хронологична");
     }
 }

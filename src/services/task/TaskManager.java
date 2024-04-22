@@ -7,43 +7,43 @@ import models.Task;
 import java.util.List;
 
 public interface TaskManager {
-    Task createTask(Task task);
+    Task createTask(Task task); // done
 
-    Subtask createSubtask(Epic epic, Subtask subtask);
+    Subtask createSubtask(Epic epic, Subtask subtask); // done
 
-    Epic createEpic(Epic epic);
+    Epic createEpic(Epic epic); // done
 
-    Task getTask(int taskId);
+    Task getTask(int taskId); // done
 
-    Subtask getSubtask(int subtaskId);
+    Subtask getSubtask(int subtaskId); // done
 
-    Epic getEpic(int epicId);
+    Epic getEpic(int epicId); // done
 
-    List<Task> getAllTasks();
+    List<Task> getAllTasks(); // done
 
-    List<Subtask> getAllSubtasks();
+    List<Subtask> getAllSubtasks(); // done
 
-    List<Epic> getAllEpics();
+    List<Epic> getAllEpics(); // done
 
-    Task updateTask(Task task);
+    Task updateTask(Task task); // done
 
-    Subtask updateSubtask(Subtask subtask);
+    Subtask updateSubtask(Subtask subtask); // done
 
-    Epic updateEpic(Epic epic);
+    Epic updateEpic(Epic epic); // done
 
-    void removeTask(int taskId);
+    void removeTask(int taskId); // done
 
-    void removeEpic(int epicId);
+    void removeEpic(int epicId); // done
 
-    void removeSubtask(int subtaskId);
+    void removeSubtask(int subtaskId); // done
 
-    void removeAllTasks();
+    void removeAllTasks(); // done
 
-    void removeAllSubtasks();
+    void removeAllSubtasks(); // done
 
-    void removeAllEpics();
+    void removeAllEpics(); // done
 
-    List<Subtask> getEpicSubtasks(Epic epic);
+    List<Subtask> getEpicSubtasks(Epic epic); // done
 
     List<Task> getHistory();
 }

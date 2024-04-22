@@ -10,7 +10,7 @@ class SubtaskTest {
 
     @Test
     @DisplayName("Проверяем равенство подзадач, если их id равны")
-    void shouldBeEqualsById() {
+    void equals_returnTrue_idIsSameOtherFieldsNo() {
         Subtask subtask = new Subtask("Title-1", "Description-1", Status.NEW);
         subtask.setId(10);
         Subtask expectedSubtask = new Subtask("Title-2", "Description-2", Status.IN_PROGRESS);

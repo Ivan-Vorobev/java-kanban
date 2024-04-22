@@ -4,8 +4,8 @@ import models.Epic;
 import models.Status;
 import models.Subtask;
 import models.Task;
-import services.task.TaskManager;
 import services.history.HistoryManager;
+import services.task.TaskManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -142,6 +142,7 @@ public class InMemoryTaskManager implements TaskManager {
             for (Integer subtaskId : subtaskIds) {
                 subtasks.remove(subtaskId);
             }
+            subtaskIds.clear();
         }
     }
 

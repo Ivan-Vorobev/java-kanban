@@ -7,25 +7,23 @@ import models.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import services.task.memory.InMemoryTaskManager;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @DisplayName("Проверяем работу InMemoryHistoryManagerTest")
 class InMemoryHistoryManagerTest {
-    InMemoryTaskManager taskManager;
     InMemoryHistoryManager historyManager;
 
     @BeforeEach
     void init() {
         historyManager = new InMemoryHistoryManager();
-        taskManager = new InMemoryTaskManager(historyManager);
     }
     @Test
-    @DisplayName("Проверяем сохранение неизменяемой истории")
-    void shouldSaveImmutableHistory() {
+    @DisplayName("Проверяем, что история записывает состояние вызванных задач / подзадач / эпиков, то есть их копии данных")
+    void shouldSaveCloneTaskIntoHistoryWhenAddTaskOrSubtaskOrEpic() {
         Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
         epic.setId(1);
         historyManager.add(epic);
@@ -74,5 +72,34 @@ class InMemoryHistoryManagerTest {
         assertNotEquals(history.get(4).getTitle(), history.get(5).getTitle(), "Title изменился везде");
         assertNotEquals(history.get(4).getDescription(), history.get(5).getDescription(), "Description изменился везде");
         assertNotEquals(history.get(4).getStatus(), history.get(5).getStatus(), "Status изменился везде");
+    }
+
+    @Test
+    @DisplayName("Проверяем, что история хранит последние 10 записей")
+    void getHistory_returnListOt10Elements_add11Tasks() {
+        Task task = new Task("Title", "Description", Status.NEW);
+        for (int i = 0; i < 11; i++) {
+            historyManager.add(task);
+        }
+
+        assertEquals(historyManager.getHistory().size(), 10, "Размер истории больше 10");
+    }
+
+    @Test
+    @DisplayName("Проверяем, что задачи записывабтся в историю")
+    void add_setTaskOrSubtaskOrEpic() {
+        Epic epic = new Epic("Epic title", "Epic description", Status.DONE);
+        Subtask subtask = new Subtask("New Subtask title", "New Subtask description", Status.NEW);
+        Task task = new Task("Title", "Description", Status.NEW);
+        historyManager.add(epic);
+        historyManager.add(task);
+        historyManager.add(subtask);
+
+        List<Task> tasks = historyManager.getHistory();
+
+        assertEquals(tasks.size(), 3, "История не записывается");
+        assertEquals(tasks.get(0), epic, "Отсутствует эпик в истории");
+        assertEquals(tasks.get(1), task, "Отсутствует задача в истории");
+        assertEquals(tasks.get(2), subtask, "Отсутствует подзадача в истории");
     }
 }
