@@ -33,7 +33,6 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private final HashMap<Integer, Node> history;
-    private int nodeCnt = 0;
     private Node lastNode;
     private Node startNode;
 
@@ -54,11 +53,10 @@ public class InMemoryHistoryManager implements HistoryManager {
         }
 
         lastNode = node;
-        nodeCnt++;
     }
 
     private List<Task> getTasks() {
-        List<Task> tasks = new ArrayList<>(nodeCnt);
+        List<Task> tasks = new ArrayList<>(history.size());
         Node node = startNode;
         while (node != null) {
             tasks.add(node.task);
@@ -72,7 +70,7 @@ public class InMemoryHistoryManager implements HistoryManager {
             return;
         }
 
-        if (nodeCnt == 1 && node.equals(lastNode) && node.equals(startNode)) {
+        if (node.equals(lastNode) && node.equals(startNode)) {
             startNode = null;
             lastNode = null;
         } else if (node.equals(lastNode)) {
@@ -92,7 +90,6 @@ public class InMemoryHistoryManager implements HistoryManager {
 
         node.next = null;
         node.prev = null;
-        nodeCnt--;
     }
 
     @Override
