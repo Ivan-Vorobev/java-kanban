@@ -76,6 +76,7 @@ class InMemoryTaskManagerTest {
         assertEquals(createdTask.getDescription(), updatedTask.getDescription(), "description обновленной задачи не равен входным параметрам");
         assertEquals(createdTask.getStatus(), updatedTask.getStatus(), "status обновленной задачи не равен входным параметрам");
     }
+
     @Test
     @DisplayName("Обновление несуществующий Task")
     void updateTask_returnNull_taskNotExist() {
@@ -178,6 +179,7 @@ class InMemoryTaskManagerTest {
         assertEquals(createdSubtask.getDescription(), updatedSubtask.getDescription(), "description обновленной подзадачи не равен входным параметрам");
         assertEquals(createdSubtask.getStatus(), updatedSubtask.getStatus(), "status обновленной подзадачи не равен входным параметрам");
     }
+
     @Test
     @DisplayName("Обновление несуществующий Subtask")
     void updateSubtask_returnNull_taskNotExist() {
@@ -286,6 +288,7 @@ class InMemoryTaskManagerTest {
         assertEquals(createdEpic.getDescription(), updatedEpic.getDescription(), "description обновленного эпика не равен входным параметрам");
         assertEquals(createdEpic.getStatus(), updatedEpic.getStatus(), "status обновленного эпика не равен входным параметрам");
     }
+
     @Test
     @DisplayName("Обновление несуществующий Epic")
     void updateEpic_returnNull_taskNotExist() {
@@ -450,5 +453,189 @@ class InMemoryTaskManagerTest {
         assertEquals(histories.get(0), task, "История не хронологична");
         assertEquals(histories.get(1), subtask, "История не хронологична");
         assertEquals(histories.get(2), createdEpic, "История не хронологична");
+    }
+
+    @Test
+    @DisplayName("Проверяем что история удаляет просмотренные задачи")
+    void getHistory_returnShownTaskList_afterDeleteTask() {
+        Task task1 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task2 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task3 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.getTask(task1.getId());
+        taskManager.getTask(task2.getId());
+        taskManager.getTask(task3.getId());
+
+        List<Task> histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 3, "История просмотров не равна количеству просмотров");
+
+        taskManager.removeTask(task2.getId());
+
+        histories = taskManager.getHistory();
+        assertEquals(histories.size(), 2, "История просмотров не равна количеству просмотров после удаления");
+
+        assertEquals(histories, List.of(task1, task3), "Task2 не удалился");
+    }
+
+    @Test
+    @DisplayName("Проверяем что история удаляет просмотренные подзадачи")
+    void getHistory_returnShownTaskList_afterDeleteSubtask() {
+        Epic createdEpic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Subtask subtask1 = taskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask2 = taskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask3 = taskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.getEpic(createdEpic.getId());
+        taskManager.getSubtask(subtask1.getId());
+        taskManager.getSubtask(subtask2.getId());
+        taskManager.getSubtask(subtask3.getId());
+
+        List<Task> histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 4, "История просмотров не равна количеству просмотров");
+
+        taskManager.removeTask(subtask2.getId());
+
+        histories = taskManager.getHistory();
+        assertEquals(histories.size(), 3, "История просмотров не равна количеству просмотров после удаления");
+
+        assertEquals(histories, List.of(createdEpic, subtask1, subtask3), "Subtask2 не удалился");
+    }
+
+    @Test
+    @DisplayName("Проверяем что история удаляет просмотренные эпики")
+    void getHistory_returnShownTaskList_afterDeleteEpic() {
+        Epic createdEpic1 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic2 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic3 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic4 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Subtask subtask1 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask2 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.getEpic(createdEpic1.getId());
+        taskManager.getEpic(createdEpic2.getId());
+        taskManager.getEpic(createdEpic3.getId());
+        taskManager.getEpic(createdEpic4.getId());
+        taskManager.getSubtask(subtask1.getId());
+        taskManager.getSubtask(subtask2.getId());
+
+        List<Task> histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 6, "История просмотров не равна количеству просмотров");
+
+        taskManager.removeEpic(createdEpic3.getId());
+
+        histories = taskManager.getHistory();
+        assertEquals(histories.size(), 5, "История просмотров не равна количеству просмотров после удаления");
+        assertEquals(histories, List.of(createdEpic1, createdEpic2, createdEpic4, subtask1, subtask2), "Epic3 не удалился");
+
+        taskManager.removeEpic(createdEpic2.getId());
+        histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 2, "История просмотров не равна количеству просмотров после удаления");
+        assertEquals(histories, List.of(createdEpic1, createdEpic4), "Epic2 не удалился");
+    }
+
+    @Test
+    @DisplayName("Проверяем что история удаляет все просмотренные задачи")
+    void getHistory_returnShownTaskList_afterDeleteAllTasks() {
+        Task task1 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task2 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task3 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Epic createdEpic1 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic2 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic3 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic4 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Subtask subtask1 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask2 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask3 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.getTask(task1.getId());
+        taskManager.getTask(task2.getId());
+        taskManager.getTask(task3.getId());
+        taskManager.getEpic(createdEpic1.getId());
+        taskManager.getEpic(createdEpic2.getId());
+        taskManager.getEpic(createdEpic3.getId());
+        taskManager.getEpic(createdEpic4.getId());
+        taskManager.getSubtask(subtask1.getId());
+        taskManager.getSubtask(subtask2.getId());
+        taskManager.getSubtask(subtask3.getId());
+
+        List<Task> histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 10, "История просмотров не равна количеству просмотров");
+
+        taskManager.removeAllTasks();
+
+        histories = taskManager.getHistory();
+        assertEquals(histories.size(), 7, "История просмотров не равна количеству просмотров после удаления");
+        assertEquals(histories, List.of(createdEpic1, createdEpic2, createdEpic3, createdEpic4, subtask1, subtask2, subtask3), "Не удалены все задачи");
+    }
+
+    @Test
+    @DisplayName("Проверяем что история удаляет все просмотренные подзадачи")
+    void getHistory_returnShownTaskList_afterDeleteAllSubtasks() {
+        Task task1 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task2 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task3 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Epic createdEpic1 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic2 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic3 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic4 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Subtask subtask1 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask2 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask3 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.getTask(task1.getId());
+        taskManager.getTask(task2.getId());
+        taskManager.getTask(task3.getId());
+        taskManager.getEpic(createdEpic1.getId());
+        taskManager.getEpic(createdEpic2.getId());
+        taskManager.getEpic(createdEpic3.getId());
+        taskManager.getEpic(createdEpic4.getId());
+        taskManager.getSubtask(subtask1.getId());
+        taskManager.getSubtask(subtask2.getId());
+        taskManager.getSubtask(subtask3.getId());
+
+        List<Task> histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 10, "История просмотров не равна количеству просмотров");
+
+        taskManager.removeAllSubtasks();
+
+        histories = taskManager.getHistory();
+        assertEquals(histories.size(), 7, "История просмотров не равна количеству просмотров после удаления");
+        assertEquals(histories, List.of(task1, task2, task3, createdEpic1, createdEpic2, createdEpic3, createdEpic4), "Не удалены все подзадачи");
+    }
+
+    @Test
+    @DisplayName("Проверяем что история удаляет все просмотренные эпики и подзадачи эпиков")
+    void getHistory_returnShownTaskList_afterDeleteAllEpicsWithSubtasks() {
+        Task task1 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task2 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Task task3 = taskManager.createTask(new Task("Title", "Description", Status.NEW));
+        Epic createdEpic1 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic2 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic3 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic4 = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Subtask subtask1 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask2 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        Subtask subtask3 = taskManager.createSubtask(createdEpic2, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.getTask(task1.getId());
+        taskManager.getTask(task2.getId());
+        taskManager.getTask(task3.getId());
+        taskManager.getEpic(createdEpic1.getId());
+        taskManager.getEpic(createdEpic2.getId());
+        taskManager.getEpic(createdEpic3.getId());
+        taskManager.getEpic(createdEpic4.getId());
+        taskManager.getSubtask(subtask1.getId());
+        taskManager.getSubtask(subtask2.getId());
+        taskManager.getSubtask(subtask3.getId());
+
+        List<Task> histories = taskManager.getHistory();
+
+        assertEquals(histories.size(), 10, "История просмотров не равна количеству просмотров");
+
+        taskManager.removeAllEpics();
+
+        histories = taskManager.getHistory();
+        assertEquals(histories.size(), 3, "История просмотров не равна количеству просмотров после удаления");
+        assertEquals(histories, List.of(task1, task2, task3), "Не удалены все эпики + подзадачи");
     }
 }
