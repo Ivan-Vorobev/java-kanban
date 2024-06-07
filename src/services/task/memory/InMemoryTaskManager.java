@@ -14,10 +14,10 @@ import java.util.List;
 public class InMemoryTaskManager implements TaskManager {
 
     private final HistoryManager historyManager;
-    private int genId;
-    private final HashMap<Integer, Task> tasks;
-    private final HashMap<Integer, Subtask> subtasks;
-    private final HashMap<Integer, Epic> epics;
+    protected int genId;
+    protected HashMap<Integer, Task> tasks;
+    protected HashMap<Integer, Subtask> subtasks;
+    protected HashMap<Integer, Epic> epics;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
         this.historyManager = historyManager;
