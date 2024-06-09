@@ -18,6 +18,12 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         this.file = file;
     }
 
+    public static FileBackedTaskManager create(File file, HistoryManager historyManager) {
+        FileBackedTaskManager manager = new FileBackedTaskManager(file, historyManager);
+        manager.loadFromFile(file);
+        return manager;
+    }
+
     @Override
     public Task createTask(Task task) {
         Task newTask = super.createTask(task);
@@ -39,8 +45,65 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         return newEpic;
     }
 
-    public void loadFromFile(File file) {
-        TaskRepository repository = new TaskRepository(file);
+    @Override
+    public Task updateTask(Task task) {
+        Task updatedTask = super.updateTask(task);
+        save();
+        return updatedTask;
+    }
+
+    @Override
+    public Subtask updateSubtask(Subtask subtask) {
+        Subtask updatedSubtask = super.updateSubtask(subtask);
+        save();
+        return updatedSubtask;
+    }
+
+    @Override
+    public Epic updateEpic(Epic epic) {
+        Epic updatedEpic = super.updateEpic(epic);
+        save();
+        return updatedEpic;
+    }
+
+    @Override
+    public void removeTask(int taskId) {
+        super.removeTask(taskId);
+        save();
+    }
+
+    @Override
+    public void removeEpic(int epicId) {
+        super.removeEpic(epicId);
+        save();
+    }
+
+    @Override
+    public void removeSubtask(int subtaskId) {
+        super.removeSubtask(subtaskId);
+        save();
+    }
+
+    @Override
+    public void removeAllTasks() {
+        super.removeAllTasks();
+        save();
+    }
+
+    @Override
+    public void removeAllSubtasks() {
+        super.removeAllSubtasks();
+        save();
+    }
+
+    @Override
+    public void removeAllEpics() {
+        super.removeAllEpics();
+        save();
+    }
+
+    private void loadFromFile(File file) {
+        TaskRepository repository = new TaskRepository(file, true);
         List<Task> taskList = repository.findAllTasks();
         List<Subtask> subtaskList = repository.findAllSubtasks();
         List<Epic> epicList = repository.findAllEpics();
@@ -73,10 +136,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     private void save() {
-        if (file.isFile()) {
-            file.delete();
-        }
-        TaskRepository repository = new TaskRepository(file);
+        TaskRepository repository = new TaskRepository(file, true);
         for (Task task : getAllTasks()) {
             repository.add(task);
         }

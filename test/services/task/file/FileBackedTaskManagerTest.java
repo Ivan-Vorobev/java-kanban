@@ -30,7 +30,7 @@ public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
             throw new RuntimeException("Ошибка создания временного файла", exception);
         }
 
-        fileTaskManager = new FileBackedTaskManager(tmpFile, new InMemoryHistoryManager());
+        fileTaskManager = FileBackedTaskManager.create(tmpFile, new InMemoryHistoryManager());
         taskManager = fileTaskManager;
     }
 
@@ -74,20 +74,18 @@ public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
         Subtask subtask2 = fileTaskManager.createSubtask(createdEpic1, new Subtask("New Subtask-2 title", "New Subtask description", Status.NEW));
         Subtask subtask3 = fileTaskManager.createSubtask(createdEpic1, new Subtask("New Subtask-3 title", "New Subtask description", Status.NEW));
 
-        fileTaskManager.removeAllTasks();
-        fileTaskManager.removeAllEpics();
-        fileTaskManager.loadFromFile(tmpFile);
+        FileBackedTaskManager newFileTaskManager = FileBackedTaskManager.create(tmpFile, new InMemoryHistoryManager());
 
-        Task task3 = fileTaskManager.createTask(new Task("Task-3", "Description", Status.NEW));
+        Task task3 = newFileTaskManager.createTask(new Task("Task-3", "Description", Status.NEW));
 
         assertTrue(task3.getId() > subtask3.getId(), "Не восстановлен genId");
-        assertEquals(task1, fileTaskManager.getTask(task1.getId()), "Не восстановлен Task-1");
-        assertEquals(task2, fileTaskManager.getTask(task2.getId()), "Не восстановлен Task-2");
-        assertEquals(createdEpic1, fileTaskManager.getEpic(createdEpic1.getId()), "Не восстановлен Epic-1");
-        assertEquals(createdEpic2, fileTaskManager.getEpic(createdEpic2.getId()), "Не восстановлен Epic-2");
-        assertEquals(subtask1, fileTaskManager.getSubtask(subtask1.getId()), "Не восстановлен Subtask-1");
-        assertEquals(subtask2, fileTaskManager.getSubtask(subtask2.getId()), "Не восстановлен Subtask-2");
-        assertEquals(subtask3, fileTaskManager.getSubtask(subtask3.getId()), "Не восстановлен Subtask-3");
+        assertEquals(task1, newFileTaskManager.getTask(task1.getId()), "Не восстановлен Task-1");
+        assertEquals(task2, newFileTaskManager.getTask(task2.getId()), "Не восстановлен Task-2");
+        assertEquals(createdEpic1, newFileTaskManager.getEpic(createdEpic1.getId()), "Не восстановлен Epic-1");
+        assertEquals(createdEpic2, newFileTaskManager.getEpic(createdEpic2.getId()), "Не восстановлен Epic-2");
+        assertEquals(subtask1, newFileTaskManager.getSubtask(subtask1.getId()), "Не восстановлен Subtask-1");
+        assertEquals(subtask2, newFileTaskManager.getSubtask(subtask2.getId()), "Не восстановлен Subtask-2");
+        assertEquals(subtask3, newFileTaskManager.getSubtask(subtask3.getId()), "Не восстановлен Subtask-3");
     }
 
 
@@ -95,7 +93,7 @@ public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
     @DisplayName("Проверяем что менеджер работает при восстановлении из пустого файла")
     void save_loadEmptyFile_afterRestore() {
         assertDoesNotThrow(() -> {
-            fileTaskManager.loadFromFile(tmpFile);
+            FileBackedTaskManager.create(tmpFile, new InMemoryHistoryManager());
         });
     }
 }

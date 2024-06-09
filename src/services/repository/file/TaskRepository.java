@@ -11,9 +11,11 @@ public class TaskRepository {
     private final File file;
     private final String firstRow = "type,id,name,status,description,epic";
     private final Map<String, Integer> keys;
+    private boolean writeModeAppend;
 
-    public TaskRepository(File file) {
+    public TaskRepository(File file, boolean rewriteData) {
         this.file = file;
+        writeModeAppend = rewriteData;
         this.keys = new HashMap<>();
         String[] columns = firstRow.split(",");
         for (int i = 0; i < columns.length; i++) {
@@ -23,7 +25,7 @@ public class TaskRepository {
 
     public void add(Task task) {
         StringJoiner joiner = new StringJoiner(",");
-        joiner.add(Type.TASK.name());
+        joiner.add(TaskType.TASK.name());
         joiner.add(task.getId().toString());
         joiner.add(task.getTitle());
         joiner.add(task.getStatus().name());
@@ -34,7 +36,7 @@ public class TaskRepository {
 
     public void add(Subtask subtask) {
         StringJoiner joiner = new StringJoiner(",");
-        joiner.add(Type.SUBTASK.name());
+        joiner.add(TaskType.SUBTASK.name());
         joiner.add(subtask.getId().toString());
         joiner.add(subtask.getTitle());
         joiner.add(subtask.getStatus().name());
@@ -45,7 +47,7 @@ public class TaskRepository {
 
     public void add(Epic epic) {
         StringJoiner joiner = new StringJoiner(",");
-        joiner.add(Type.EPIC.name());
+        joiner.add(TaskType.EPIC.name());
         joiner.add(epic.getId().toString());
         joiner.add(epic.getTitle());
         joiner.add(epic.getStatus().name());
@@ -57,7 +59,7 @@ public class TaskRepository {
     public List<Task> findAllTasks() {
         List<Task> result = new ArrayList<>();
 
-        for (String row : read(Type.TASK)) {
+        for (String row : read(TaskType.TASK)) {
             String[] columns = row.split(",");
             Task task = new Task(
                     Integer.valueOf(columns[keys.get("id")]),
@@ -74,7 +76,7 @@ public class TaskRepository {
     public List<Subtask> findAllSubtasks() {
         List<Subtask> result = new ArrayList<>();
 
-        for (String row : read(Type.SUBTASK)) {
+        for (String row : read(TaskType.SUBTASK)) {
             String[] columns = row.split(",");
             Subtask subtask = new Subtask(
                     columns[keys.get("name")],
@@ -104,7 +106,7 @@ public class TaskRepository {
             epicList.add(subtask.getId());
         }
 
-        for (String row : read(Type.EPIC)) {
+        for (String row : read(TaskType.EPIC)) {
             String[] columns = row.split(",");
             Epic epic = new Epic(
                     columns[keys.get("name")],
@@ -121,7 +123,7 @@ public class TaskRepository {
         return result;
     }
 
-    private List<String> read(Type type) {
+    private List<String> read(TaskType taskType) {
         List<String> result = new ArrayList<>();
         try (BufferedReader fileReader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
             if (fileReader.ready()) {
@@ -130,7 +132,7 @@ public class TaskRepository {
 
             while (fileReader.ready()) {
                 String row = fileReader.readLine().strip();
-                if (row.startsWith(type.name())) {
+                if (row.startsWith(taskType.name())) {
                     result.add(row);
                 }
             }
@@ -145,9 +147,8 @@ public class TaskRepository {
     }
 
     private void write(String row) {
-        boolean append = file.isFile();
-        try (FileWriter fileWriter = new FileWriter(file, StandardCharsets.UTF_8, append)) {
-            if (!append) {
+        try (FileWriter fileWriter = new FileWriter(file, StandardCharsets.UTF_8, writeModeAppend)) {
+            if (!writeModeAppend) {
                 fileWriter.write(firstRow + "\n");
             }
             fileWriter.write(row + "\n");
@@ -156,5 +157,6 @@ public class TaskRepository {
         } catch (IOException exception) {
             throw new ManagerSaveException("Ошибка записи в файл", exception);
         }
+        writeModeAppend = true;
     }
 }
