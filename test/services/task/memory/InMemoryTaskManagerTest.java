@@ -15,11 +15,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Проверяем работу InMemoryTaskManagerTest")
-class InMemoryTaskManagerTest {
-    InMemoryTaskManager taskManager;
+public class InMemoryTaskManagerTest {
+    protected InMemoryTaskManager taskManager;
 
     @BeforeEach
-    void init() {
+    protected void init() {
         taskManager = new InMemoryTaskManager(new InMemoryHistoryManager());
     }
 
