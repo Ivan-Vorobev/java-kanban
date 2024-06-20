@@ -68,11 +68,7 @@ public class TaskRepository {
     }
 
     private String prepareStartTime(Task task) {
-        if (task.getStartTime() == null) {
-            return "";
-        }
-
-        return task.getStartTime().toString();
+        return task.getStartTime() == null ? "" : task.getStartTime().toString();
     }
 
     private String prepareEndTime(Task task) {
