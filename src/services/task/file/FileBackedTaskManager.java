@@ -116,16 +116,19 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         for (Task task : taskList) {
             tasks.put(task.getId(), task);
             correctGenId(task);
+            addPrioritizedTask(task);
         }
 
         for (Subtask subtask : subtaskList) {
             subtasks.put(subtask.getId(), subtask);
             correctGenId(subtask);
+            addPrioritizedTask(subtask);
         }
 
         for (Epic epic : epicList) {
             epics.put(epic.getId(), epic);
             correctGenId(epic);
+            addPrioritizedTask(epic);
         }
     }
 

@@ -5,11 +5,13 @@ import models.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class TaskRepository {
     private final File file;
-    private final String firstRow = "type,id,name,status,description,epic";
+    private final String firstRow = "type,id,name,status,description,epic,duration,startTime,endTime";
     private final Map<String, Integer> keys;
     private boolean writeModeAppend;
 
@@ -31,6 +33,9 @@ public class TaskRepository {
         joiner.add(task.getStatus().name());
         joiner.add(task.getDescription());
         joiner.add("");
+        joiner.add(Long.toString(task.getDuration().toMinutes()));
+        joiner.add(prepareStartTime(task));
+        joiner.add("");
         write(joiner.toString());
     }
 
@@ -42,6 +47,9 @@ public class TaskRepository {
         joiner.add(subtask.getStatus().name());
         joiner.add(subtask.getDescription());
         joiner.add(subtask.getEpicId().toString());
+        joiner.add(Long.toString(subtask.getDuration().toMinutes()));
+        joiner.add(prepareStartTime(subtask));
+        joiner.add("");
         write(joiner.toString());
     }
 
@@ -53,19 +61,42 @@ public class TaskRepository {
         joiner.add(epic.getStatus().name());
         joiner.add(epic.getDescription());
         joiner.add("");
+        joiner.add(Long.toString(epic.getDuration().toMinutes()));
+        joiner.add(prepareStartTime(epic));
+        joiner.add(prepareEndTime(epic));
         write(joiner.toString());
+    }
+
+    private String prepareStartTime(Task task) {
+        if (task.getStartTime() == null) {
+            return "";
+        }
+
+        return task.getStartTime().toString();
+    }
+
+    private String prepareEndTime(Task task) {
+        if (task.getStartTime() == null) {
+            return "";
+        }
+
+        return task.getEndTime().toString();
     }
 
     public List<Task> findAllTasks() {
         List<Task> result = new ArrayList<>();
 
         for (String row : read(TaskType.TASK)) {
-            String[] columns = row.split(",");
+            String[] columns = row.split(String.valueOf(','), keys.size());
             Task task = new Task(
                     Integer.valueOf(columns[keys.get("id")]),
                     columns[keys.get("name")],
                     columns[keys.get("description")],
-                    Status.valueOf(columns[keys.get("status")])
+                    Status.valueOf(columns[keys.get("status")]),
+                    !columns[keys.get("startTime")].isEmpty()
+                            ? Instant.from(LocalDateTime.parse(columns[keys.get("startTime")]))
+                            : null,
+                    Integer.valueOf(columns[keys.get("duration")])
             );
             result.add(task);
         }
@@ -77,11 +108,15 @@ public class TaskRepository {
         List<Subtask> result = new ArrayList<>();
 
         for (String row : read(TaskType.SUBTASK)) {
-            String[] columns = row.split(",");
+            String[] columns = row.split(String.valueOf(','), keys.size());
             Subtask subtask = new Subtask(
                     columns[keys.get("name")],
                     columns[keys.get("description")],
-                    Status.valueOf(columns[keys.get("status")])
+                    Status.valueOf(columns[keys.get("status")]),
+                    !columns[keys.get("startTime")].isEmpty()
+                            ? Instant.from(LocalDateTime.parse(columns[keys.get("startTime")]))
+                            : null,
+                    Integer.valueOf(columns[keys.get("duration")])
             );
             subtask.setId(Integer.valueOf(columns[keys.get("id")]));
             subtask.setEpicId(Integer.valueOf(columns[keys.get("epic")]));
@@ -107,13 +142,21 @@ public class TaskRepository {
         }
 
         for (String row : read(TaskType.EPIC)) {
-            String[] columns = row.split(",");
+            String[] columns = row.split(String.valueOf(','), keys.size());
             Epic epic = new Epic(
                     columns[keys.get("name")],
                     columns[keys.get("description")],
-                    Status.valueOf(columns[keys.get("status")])
+                    Status.valueOf(columns[keys.get("status")]),
+                    !columns[keys.get("startTime")].isEmpty()
+                            ? Instant.from(LocalDateTime.parse(columns[keys.get("startTime")]))
+                            : null,
+                    Integer.valueOf(columns[keys.get("duration")])
             );
             epic.setId(Integer.valueOf(columns[keys.get("id")]));
+            Instant endTime = !columns[keys.get("endTime")].isEmpty()
+                    ? Instant.from(LocalDateTime.parse(columns[keys.get("endTime")]))
+                    : null;
+            epic.setEndTime(endTime);
             if (epicLists.get(epic.getId()) != null) {
                 epic.getSubtaskIds().addAll(epicLists.get(epic.getId()));
             }

@@ -1,5 +1,7 @@
 package models;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 
 public class Task {
@@ -7,11 +9,44 @@ public class Task {
     private String title;
     private String description;
     private Status status;
+    private Duration duration;
+    private Instant startTime;
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = Duration.ofMinutes(duration);
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public Instant getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Instant startTime) {
+        this.startTime = startTime;
+    }
 
     public Task(String title, String description, Status status) {
+        this(title, description, status, null, 0);
+    }
+
+    public Task(String title, String description, Status status, Instant startTime, Integer duration) {
         this.title = title;
         this.description = description;
         this.status = status;
+        this.startTime = startTime;
+        setDuration(duration);
+    }
+
+    public Task(Integer id, String title, String description, Status status, Instant startTime, Integer duration) {
+        this(title, description, status, startTime, duration);
+        setId(id);
     }
 
     public Task(Integer id, String title, String description, Status status) {
@@ -51,6 +86,14 @@ public class Task {
         this.status = status;
     }
 
+    public Instant getEndTime() {
+        if (startTime == null) {
+            throw new RuntimeException("Не указано время начала");
+        }
+
+        return startTime.plus(duration);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -71,6 +114,8 @@ public class Task {
                 ", title='" + getTitle() + '\'' +
                 ", description='" + getDescription() + '\'' +
                 ", status=" + getStatus() +
+                ", startTime=" + getStartTime() +
+                ", duration=" + getDuration().toMinutes() +
                 '}';
     }
 }
