@@ -10,18 +10,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import services.history.memory.InMemoryHistoryManager;
-import services.task.memory.InMemoryTaskManagerTest;
+import services.task.TaskManagerTest;
 
 import java.io.File;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
+public class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
     private File tmpFile;
-    protected FileBackedTaskManager fileTaskManager;
 
-    @Override
     @BeforeEach
     protected void init() {
         try {
@@ -30,8 +28,7 @@ public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
             throw new RuntimeException("Ошибка создания временного файла", exception);
         }
 
-        fileTaskManager = FileBackedTaskManager.create(tmpFile, new InMemoryHistoryManager());
-        taskManager = fileTaskManager;
+        taskManager = FileBackedTaskManager.create(tmpFile, new InMemoryHistoryManager());
     }
 
     @AfterEach
@@ -42,7 +39,7 @@ public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
     @Test
     @DisplayName("Проверяем что задачи/подзадачи/эпики пишутся в файл после создания")
     void save_saveTasksSubtasksEpicsToFile_afterCreate() {
-        Task task1 = fileTaskManager.createTask(new Task("Title", "Description", Status.NEW));
+        taskManager.createTask(new Task("Title", "Description", Status.NEW));
 
         assertTrue(tmpFile.isFile(), "Файл отсутствует");
 
@@ -50,15 +47,15 @@ public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
 
         assertTrue(fileSize > 0, "В файл ничего не записано. Пишем Subtask");
 
-        Epic createdEpic = fileTaskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
+        Epic createdEpic = taskManager.createEpic(new Epic("Epic title", "Epic description", Status.DONE));
 
         assertTrue(fileSize < tmpFile.length(), "В файл ничего не записано. Пишем Task");
 
         fileSize = tmpFile.length();
 
-        Subtask subtask1 = fileTaskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
-        Subtask subtask2 = fileTaskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
-        Subtask subtask3 = fileTaskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
+        taskManager.createSubtask(createdEpic, new Subtask("New Subtask title", "New Subtask description", Status.NEW));
 
         assertTrue(fileSize < tmpFile.length(), "В файл ничего не записано. Пишем Epic");
     }
@@ -66,26 +63,26 @@ public class FileBackedTaskManagerTest extends InMemoryTaskManagerTest {
     @Test
     @DisplayName("Проверяем что задачи/подзадачи/эпики восстанавливаются из файла после создания")
     void save_loadTasksSubtasksEpicsFromFile_afterRestore() {
-        Task task1 = fileTaskManager.createTask(new Task("Task-1", "Description", Status.NEW));
-        Task task2 = fileTaskManager.createTask(new Task("Task-2", "Description", Status.NEW));
-        Epic createdEpic1 = fileTaskManager.createEpic(new Epic("Epic-1 title", "Epic description", Status.DONE));
-        Epic createdEpic2 = fileTaskManager.createEpic(new Epic("Epic-2 title", "Epic description", Status.DONE));
-        Subtask subtask1 = fileTaskManager.createSubtask(createdEpic1, new Subtask("New Subtask-1 title", "New Subtask description", Status.NEW));
-        Subtask subtask2 = fileTaskManager.createSubtask(createdEpic1, new Subtask("New Subtask-2 title", "New Subtask description", Status.NEW));
-        Subtask subtask3 = fileTaskManager.createSubtask(createdEpic1, new Subtask("New Subtask-3 title", "New Subtask description", Status.NEW));
+        Task task1 = taskManager.createTask(new Task("Task-1", "Description", Status.NEW));
+        Task task2 = taskManager.createTask(new Task("Task-2", "Description", Status.NEW));
+        Epic createdEpic1 = taskManager.createEpic(new Epic("Epic-1 title", "Epic description", Status.DONE));
+        Epic createdEpic2 = taskManager.createEpic(new Epic("Epic-2 title", "Epic description", Status.DONE));
+        Subtask subtask1 = taskManager.createSubtask(createdEpic1, new Subtask("New Subtask-1 title", "New Subtask description", Status.NEW));
+        Subtask subtask2 = taskManager.createSubtask(createdEpic1, new Subtask("New Subtask-2 title", "New Subtask description", Status.NEW));
+        Subtask subtask3 = taskManager.createSubtask(createdEpic1, new Subtask("New Subtask-3 title", "New Subtask description", Status.NEW));
 
-        FileBackedTaskManager newFileTaskManager = FileBackedTaskManager.create(tmpFile, new InMemoryHistoryManager());
+        FileBackedTaskManager newTaskManager = FileBackedTaskManager.create(tmpFile, new InMemoryHistoryManager());
 
-        Task task3 = newFileTaskManager.createTask(new Task("Task-3", "Description", Status.NEW));
+        Task task3 = newTaskManager.createTask(new Task("Task-3", "Description", Status.NEW));
 
         assertTrue(task3.getId() > subtask3.getId(), "Не восстановлен genId");
-        assertEquals(task1, newFileTaskManager.getTask(task1.getId()), "Не восстановлен Task-1");
-        assertEquals(task2, newFileTaskManager.getTask(task2.getId()), "Не восстановлен Task-2");
-        assertEquals(createdEpic1, newFileTaskManager.getEpic(createdEpic1.getId()), "Не восстановлен Epic-1");
-        assertEquals(createdEpic2, newFileTaskManager.getEpic(createdEpic2.getId()), "Не восстановлен Epic-2");
-        assertEquals(subtask1, newFileTaskManager.getSubtask(subtask1.getId()), "Не восстановлен Subtask-1");
-        assertEquals(subtask2, newFileTaskManager.getSubtask(subtask2.getId()), "Не восстановлен Subtask-2");
-        assertEquals(subtask3, newFileTaskManager.getSubtask(subtask3.getId()), "Не восстановлен Subtask-3");
+        assertEquals(task1, newTaskManager.getTask(task1.getId()), "Не восстановлен Task-1");
+        assertEquals(task2, newTaskManager.getTask(task2.getId()), "Не восстановлен Task-2");
+        assertEquals(createdEpic1, newTaskManager.getEpic(createdEpic1.getId()), "Не восстановлен Epic-1");
+        assertEquals(createdEpic2, newTaskManager.getEpic(createdEpic2.getId()), "Не восстановлен Epic-2");
+        assertEquals(subtask1, newTaskManager.getSubtask(subtask1.getId()), "Не восстановлен Subtask-1");
+        assertEquals(subtask2, newTaskManager.getSubtask(subtask2.getId()), "Не восстановлен Subtask-2");
+        assertEquals(subtask3, newTaskManager.getSubtask(subtask3.getId()), "Не восстановлен Subtask-3");
     }
 
 
