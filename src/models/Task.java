@@ -13,6 +13,9 @@ public class Task {
     private Instant startTime;
 
     public Duration getDuration() {
+        if (duration == null) {
+            return Duration.ofMinutes(0);
+        }
         return duration;
     }
 

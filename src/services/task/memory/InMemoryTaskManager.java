@@ -271,6 +271,7 @@ public class InMemoryTaskManager implements TaskManager {
         return historyManager.getHistory();
     }
 
+    @Override
     public TreeSet<Task> getPrioritizedTasks() {
         return prioritizedTasks;
     }
@@ -296,7 +297,7 @@ public class InMemoryTaskManager implements TaskManager {
             }
 
             if (hasIntersection(task, prioritizedTask)) {
-                throw new ValidationException("Пересечение с задачей id = " + prioritizedTask.getId());
+                throw new ValidationException("[" + prioritizedTask.getClass() + "] Пересечение с задачей id = " + prioritizedTask.getId());
             }
         }
     }
@@ -357,10 +358,10 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     private Duration getEpicDuration(List<Integer> subtaskIds) {
-        return Duration.ofMillis(subtaskIds.isEmpty() ? 0 : subtaskIds.stream()
+        return Duration.ofSeconds(subtaskIds.isEmpty() ? 0 : subtaskIds.stream()
                 .map(subtasks::get)
                 .map(Subtask::getDuration)
-                .mapToLong(Duration::toMinutes)
+                .mapToLong(Duration::toSeconds)
                 .sum());
     }
 
