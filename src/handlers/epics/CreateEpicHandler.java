@@ -1,7 +1,8 @@
-package handlers;
+package handlers.epics;
 
 import com.sun.net.httpserver.HttpExchange;
 import exceptions.BadRequestException;
+import handlers.MainHandler;
 import models.Epic;
 
 import java.io.IOException;

@@ -1,7 +1,8 @@
-package handlers;
+package handlers.tasks;
 
 import com.sun.net.httpserver.HttpExchange;
 import exceptions.BadRequestException;
+import handlers.MainHandler;
 import models.Task;
 
 import java.io.IOException;

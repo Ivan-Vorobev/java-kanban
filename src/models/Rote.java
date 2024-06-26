@@ -9,20 +9,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Rote {
-
     private final String method;
     private final String pattern;
+    private final String path;
     private final MainHandler handler;
 
     public Rote(String method, String path, MainHandler handler) {
 
         this.method = method;
+        this.path = path;
         this.handler = handler;
 
         String newPath = path;
         if (path.contains("{id}")) {
             newPath = path.replace("{id}", "(\\d+)");
-
         }
 
         pattern = "^" + newPath + "$";
@@ -53,6 +53,14 @@ public class Rote {
         }
 
         return Optional.empty();
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public String getPath() {
+        return path;
     }
 
     @Override

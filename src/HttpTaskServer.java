@@ -1,5 +1,10 @@
 import com.sun.net.httpserver.HttpServer;
-import handlers.*;
+import handlers.MainHttpHandler;
+import handlers.epics.*;
+import handlers.history.HistoryHandler;
+import handlers.prioritized.PrioritizedHandler;
+import handlers.subtasks.*;
+import handlers.tasks.*;
 import models.Rote;
 import services.task.TaskManager;
 
@@ -19,22 +24,28 @@ public class HttpTaskServer {
         httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         MainHttpHandler mainHandler = new MainHttpHandler(taskManager);
         mainHandler
-                .withRoute(new Rote("GET", "/tasks", new TaskListHandler()))
-                .withRoute(new Rote("POST", "/tasks", new CreateTaskHandler()))
-                .withRoute(new Rote("GET", "/tasks/{id}", new GetTaskHandler()))
-                .withRoute(new Rote("POST", "/tasks/{id}", new UpdateTaskHandler()))
-                .withRoute(new Rote("DELETE", "/tasks/{id}", new DeleteTaskHandler()))
-                .withRoute(new Rote("GET", "/subtasks", new SubtaskListHandler()))
-                .withRoute(new Rote("POST", "/subtasks", new CreateSubtaskHandler()))
-                .withRoute(new Rote("GET", "/subtasks/{id}", new GetSubtaskHandler()))
-                .withRoute(new Rote("POST", "/subtasks/{id}", new UpdateSubtaskHandler()))
-                .withRoute(new Rote("DELETE", "/subtasks/{id}", new DeleteSubtaskHandler()))
-                .withRoute(new Rote("GET", "/epics", new EpicListHandler()))
-                .withRoute(new Rote("GET", "/epics/{id}", new GetEpicHandler()))
-                .withRoute(new Rote("GET", "/epics/{id}/subtasks", new GetEpicSubtasksHandler()))
-                .withRoute(new Rote("POST", "/epics", new CreateEpicHandler()))
-                .withRoute(new Rote("POST", "/epics/{id}", new UpdateEpicHandler()))
-                .withRoute(new Rote("DELETE", "/epics/{id}", new DeleteEpicHandler()))
+                .withRouteGroup("/tasks",
+                        new Rote("GET", "/", new TaskListHandler()),
+                        new Rote("POST", "/", new CreateTaskHandler()),
+                        new Rote("GET", "/{id}", new GetTaskHandler()),
+                        new Rote("POST", "/{id}", new UpdateTaskHandler()),
+                        new Rote("DELETE", "/{id}", new DeleteTaskHandler())
+                )
+                .withRouteGroup("/subtasks",
+                        new Rote("GET", "/", new SubtaskListHandler()),
+                        new Rote("POST", "/", new CreateSubtaskHandler()),
+                        new Rote("GET", "/{id}", new GetSubtaskHandler()),
+                        new Rote("POST", "/{id}", new UpdateSubtaskHandler()),
+                        new Rote("DELETE", "/{id}", new DeleteSubtaskHandler())
+                )
+                .withRouteGroup("/epics",
+                        new Rote("GET", "/", new EpicListHandler()),
+                        new Rote("GET", "/{id}", new GetEpicHandler()),
+                        new Rote("GET", "/{id}/subtasks", new GetEpicSubtasksHandler()),
+                        new Rote("POST", "/", new CreateEpicHandler()),
+                        new Rote("POST", "/{id}", new UpdateEpicHandler()),
+                        new Rote("DELETE", "/{id}", new DeleteEpicHandler())
+                )
                 .withRoute(new Rote("GET", "/history", new HistoryHandler()))
                 .withRoute(new Rote("GET", "/prioritized", new PrioritizedHandler()));
         httpServer.createContext("/", mainHandler);

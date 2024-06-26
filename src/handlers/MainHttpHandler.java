@@ -20,7 +20,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainHttpHandler implements HttpHandler {
     protected Gson gson;
@@ -41,6 +43,14 @@ public class MainHttpHandler implements HttpHandler {
 
     public MainHttpHandler withRoute(Rote rote) {
         rotes.add(rote);
+        return this;
+    }
+
+    public MainHttpHandler withRouteGroup(String groupName, Rote... rote) {
+        Arrays.stream(rote).peek(r -> {
+            String path = r.getPath().equals("/") ? groupName : groupName + r.getPath();
+            rotes.add(new Rote(r.getMethod(), path, r.getHandler()));
+        }).collect(Collectors.toList());
         return this;
     }
 

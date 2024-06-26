@@ -1,13 +1,14 @@
-package handlers;
+package handlers.tasks;
 
 import com.sun.net.httpserver.HttpExchange;
+import handlers.MainHandler;
 
 import java.io.IOException;
 
-public class DeleteEpicHandler extends MainHandler {
+public class DeleteTaskHandler extends MainHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        getTaskManager().removeEpic(getId().get());
+        getTaskManager().removeTask(getId().get());
         setStatusCode(204);
         setResponseBody(gson.toJson(""));
     }

@@ -1,13 +1,14 @@
-package handlers;
+package handlers.subtasks;
 
 import com.sun.net.httpserver.HttpExchange;
+import handlers.MainHandler;
 
 import java.io.IOException;
 
-public class DeleteTaskHandler extends MainHandler {
+public class DeleteSubtaskHandler extends MainHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        getTaskManager().removeTask(getId().get());
+        getTaskManager().removeSubtask(getId().get());
         setStatusCode(204);
         setResponseBody(gson.toJson(""));
     }

@@ -1,6 +1,7 @@
-package handlers;
+package handlers.tasks;
 
 import com.sun.net.httpserver.HttpExchange;
+import handlers.MainHandler;
 
 import java.io.IOException;
 
